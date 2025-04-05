@@ -51,32 +51,52 @@ const PaymentForm = () => {
     setSuccess('');
 
     try {
-      // First analyze the transaction for fraud
+      // First get the user's transaction history to calculate averages
+      const response = await axios.get(`http://localhost:5000/api/transactions?account_id=${formData.accountId}`);
+      const userTransactions = response.data;
+      
+      // Calculate user's average transaction
+      const userAverage = userTransactions.length > 0
+        ? userTransactions.reduce((sum, txn) => sum + txn.amount, 0) / userTransactions.length
+        : 0;
+
+      // Count transactions in the last hour
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const recentTransactions = userTransactions.filter(txn => 
+        new Date(txn.timestamp) > oneHourAgo
+      ).length;
+
+      // Get time since last login (simulated for now)
+      const lastLoginTime = localStorage.getItem('lastLoginTime') || new Date().toISOString();
+      const timeSinceLogin = (new Date() - new Date(lastLoginTime)) / (60 * 60 * 1000); // hours
+
+      // Analyze the transaction for fraud
       const analysisData = {
         transaction_amount: parseFloat(formData.amount),
         merchant_category_code: formData.merchantCategory,
         transaction_time: new Date().toISOString(),
-        user_average_transaction: 200.00, // Set a baseline for testing
+        user_average_transaction: userAverage,
         ip_address: ipAddress,
         device_id: deviceId,
-        transactions_last_hour: 6, // Set high to trigger fraud detection
-        time_since_last_login: 0.05, // Recent login to trigger fraud detection
+        transactions_last_hour: recentTransactions,
+        time_since_last_login: timeSinceLogin,
         shipping_address: formData.shippingAddress,
         payment_method_age: parseFloat(formData.paymentMethodAge)
       };
 
+      console.log('Sending analysis data:', analysisData);
       const analysisResponse = await axios.post('http://localhost:5000/api/analyze-transaction', analysisData);
       console.log('Fraud Analysis Response:', analysisResponse.data);
 
-      if (analysisResponse.data.is_fraudulent) {
-        setTransactionAnalysis(analysisResponse.data);
-        setShowOTP(true);
-        setIsLoading(false);
-        return;
-      }
-
-      // If not fraudulent, proceed with transaction
-      await processTransaction(analysisResponse.data);
+      // Always show OTP verification, but pass fraud analysis data
+      setTransactionAnalysis({
+        ...analysisResponse.data,
+        amount: formData.amount,
+        recipient: formData.recipient,
+        merchantCategory: formData.merchantCategory
+      });
+      setShowOTP(true);
+      setIsLoading(false);
 
     } catch (err) {
       console.error('Error:', err.response || err);
@@ -94,7 +114,14 @@ const PaymentForm = () => {
         recipient: formData.recipient,
         description: formData.description,
         category: formData.merchantCategory,
-        transaction_analysis: analysis
+        merchant: formData.recipient,
+        shipping_address: formData.shippingAddress,
+        transaction_analysis: {
+          ...analysis,
+          payment_method_age: parseFloat(formData.paymentMethodAge),
+          user_device: deviceId,
+          ip_address: ipAddress
+        }
       };
 
       console.log('Sending transaction:', transactionData);

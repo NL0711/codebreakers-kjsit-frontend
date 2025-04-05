@@ -8,8 +8,21 @@ from datetime import datetime, timedelta
 import numpy as np
 from flask_cors import CORS
 import pandas as pd
+import firebase_admin
+from firebase_admin import credentials, db
 
 app = Flask(__name__)
+
+
+
+# Initialize Firebase Admin
+cred = credentials.Certificate('firebase_credentials.json')
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://codebreakers-levelup-default-rtdb.asia-southeast1.firebasedatabase.app'
+})
+
+# Get reference to the fraudulent transactions node
+fraud_ref = db.reference('fraudulent_transactions')
 
 # Configure CORS
 CORS(app, resources={
@@ -543,13 +556,7 @@ def analyze_transaction():
         "payment_age": float(data["payment_method_age"])
     }
     
-    # Here you would pass these features to your ML model
-    # For example:
-    # prediction = ml_model.predict(features)
-    # fraud_probability = ml_model.predict_proba(features)
-    
     # For demonstration, using a simplified scoring system
-    # In production, replace this with actual ML model prediction
     risk_factors = []
     risk_score = 0
     
@@ -602,8 +609,35 @@ def analyze_transaction():
         "confidence": min(risk_score / 100, 0.99),  # Convert score to probability
         "risk_factors": risk_factors,
         "features_analyzed": list(features.keys()),
-        "model_version": "1.0.0"  # For tracking which version of the model made the prediction
+        "model_version": "1.0.0"
     }
+    
+    # If transaction is fraudulent, store it in Firebase
+    if response["is_fraudulent"]:
+        fraud_data = {
+            "transaction_id": response["transaction_id"],
+            "timestamp": response["timestamp"],
+            "amount": features["amount"],
+            "merchant_code": features["merchant_code"],
+            "risk_score": response["risk_score"],
+            "confidence": response["confidence"],
+            "risk_factors": response["risk_factors"],
+            "device_info": {
+                "ip_address": features["ip_address"],
+                "device_id": features["device_id"]
+            },
+            "transaction_details": {
+                "amount_vs_average": features["amount_vs_average"],
+                "recent_transactions": features["recent_transactions"],
+                "login_time_diff": features["login_time_diff"],
+                "has_shipping": features["has_shipping"],
+                "payment_age": features["payment_age"],
+                "hour_of_day": features["hour_of_day"]
+            }
+        }
+        
+        # Store in Firebase with transaction_id as the key
+        fraud_ref.child(response["transaction_id"]).set(fraud_data)
     
     return jsonify(response)
 
