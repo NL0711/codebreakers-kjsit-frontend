@@ -5,7 +5,6 @@ import time
 import random
 import uuid
 from datetime import datetime, timedelta
-import pandas as pd
 import numpy as np
 from flask_cors import CORS
 
@@ -13,7 +12,7 @@ app = Flask(__name__)
 CORS(app, resources={
     r"/*": {
         "origins": ["http://localhost:5173"],
-        "methods": ["GET", "POST", "OPTIONS"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
     }
@@ -293,27 +292,6 @@ def login():
         "ip_address": request.remote_addr,
         "user_agent": request.headers.get("User-Agent")
     }
-    
-    # Store login attempt in database (you might want to create a new collection for this)
-    if "login_attempts" not in database:
-        database["login_attempts"] = []
-    database["login_attempts"].append(login_attempt)
-    
-    if user:
-        return jsonify({
-            'success': True,
-            'message': 'Login successful',
-            'user': {
-                'username': user['name'],
-                'email': user['email'],
-                'user_id': user['user_id']
-            }
-        }), 200
-    else:
-        return jsonify({
-            'success': False,
-            'message': 'Invalid email or password'
-        }), 401
 
 @app.route('/login-attempt', methods=['POST'])
 def record_login_attempt():
@@ -334,16 +312,6 @@ def record_login_attempt():
         "user_agent": request.headers.get("User-Agent")
     }
     
-    # Store login attempt in database
-    if "login_attempts" not in database:
-        database["login_attempts"] = []
-    database["login_attempts"].append(login_attempt)
-    
-    return jsonify({
-        'success': True,
-        'message': 'Login attempt recorded'
-    }), 200
-
 @app.route('/api/generate-fraud', methods=['POST'])
 def generate_fraud():
     """Endpoint to generate fraudulent activities for testing"""

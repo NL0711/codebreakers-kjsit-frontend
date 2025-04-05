@@ -4,10 +4,11 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Shield, AlertTriangle } from "lucide-react"
 import { behavioralAnalyzer } from "../utils/behaviouralAnalysis"
-import axios from 'axios'
+import { useAuth } from "../context/AuthContext"
 
 const Login = () => {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -21,18 +22,7 @@ const Login = () => {
 
   const recordLoginAttempt = (isSuccessful) => {
     const behavioralData = behavioralAnalyzer.generateBehavioralData(formData.username, isSuccessful)
-
-    const loginAttempt = {
-      timestamp: behavioralData.timestamp,
-      username: formData.username,
-      password: formData.password,
-      isSuccessful,
-      sessionData: behavioralData.sessionData,
-      typingAnalysis: behavioralData.typingAnalysis,
-      securityMetrics: behavioralData.securityMetrics,
-    }
-
-    return loginAttempt
+    return behavioralData
   }
 
   const handleSubmit = async (e) => {
@@ -41,48 +31,25 @@ const Login = () => {
     setError("")
 
     try {
-      // Record behavioral data
-      const attemptData = recordLoginAttempt(true)
+      const result = await login(formData.username, formData.password)
+      const attemptData = recordLoginAttempt(result.success)
       console.log("Login attempt data:", attemptData)
 
-      // Send login request to server
-      const response = await axios.post('http://localhost:5000/login', {
-        username: formData.username,
-        password: formData.password,
-        behavioralData: {
-          timestamp: attemptData.timestamp,
-          sessionData: attemptData.sessionData,
-          typingAnalysis: attemptData.typingAnalysis,
-          securityMetrics: attemptData.securityMetrics
-        }
-      })
-
-      if (response.data.success) {
-        // If login is successful but risky, we might want to add additional verification
+      if (result.success) {
         if (attemptData.securityMetrics.isRisky) {
-          // For demo purposes, we'll just show an alert but still log in
-          // In a real app, you might redirect to a 2FA page instead
+          alert('Warning: Unusual login pattern detected!')
           setTimeout(() => {
             navigate("/dashboard")
-          }, 2000)
+          }, 1000)
         } else {
           navigate("/dashboard")
         }
       } else {
-        throw new Error(response.data.message || "Invalid credentials")
+        throw new Error(result.error || "Invalid credentials")
       }
     } catch (err) {
       setError(err.message || "An error occurred during login")
-      // Record failed login attempt
-      const failedAttempt = recordLoginAttempt(false)
-      try {
-        await axios.post('http://localhost:5000/login-attempt', {
-          ...failedAttempt,
-          error: err.message
-        })
-      } catch (logError) {
-        console.error('Failed to log login attempt:', logError)
-      }
+      recordLoginAttempt(false)
     } finally {
       setIsLoading(false)
     }
@@ -101,12 +68,12 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-hero-bg to-indigo-800">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#0D191E]">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="text-white text-3xl font-semibold flex items-center justify-center gap-2">
             <Shield className="w-8 h-8" />
-            SBI Online Banking
+            SecureBank
           </div>
           <p className="text-gray-300 mt-2">Welcome back! Please login to your account.</p>
         </div>
@@ -176,7 +143,7 @@ const Login = () => {
               disabled={isLoading}
               className="w-full bg-yellow-500 hover:bg-yellow-600 text-black py-3 px-4 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Logging In..." : "Log In"}
+              {isLoading ? "Logging in..." : "Log In"}
             </button>
           </form>
 
