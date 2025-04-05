@@ -60,11 +60,13 @@ const PaymentForm = () => {
         ? userTransactions.reduce((sum, txn) => sum + txn.amount, 0) / userTransactions.length
         : 0;
 
-      // Count transactions in the last hour
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      // Count transactions in the last hour more accurately
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       const recentTransactions = userTransactions.filter(txn => 
-        new Date(txn.timestamp) > oneHourAgo
+        txn.timestamp > oneHourAgo
       ).length;
+
+      console.log('Recent transactions in last hour:', recentTransactions);
 
       // Get time since last login (simulated for now)
       const lastLoginTime = localStorage.getItem('lastLoginTime') || new Date().toISOString();
@@ -78,7 +80,7 @@ const PaymentForm = () => {
         user_average_transaction: userAverage,
         ip_address: ipAddress,
         device_id: deviceId,
-        transactions_last_hour: recentTransactions,
+        transactions_last_hour: recentTransactions,  // Now using actual count
         time_since_last_login: timeSinceLogin,
         shipping_address: formData.shippingAddress,
         payment_method_age: parseFloat(formData.paymentMethodAge)
@@ -93,7 +95,8 @@ const PaymentForm = () => {
         ...analysisResponse.data,
         amount: formData.amount,
         recipient: formData.recipient,
-        merchantCategory: formData.merchantCategory
+        merchantCategory: formData.merchantCategory,
+        recentTransactions: recentTransactions  // Add this to the OTP verification data
       });
       setShowOTP(true);
       setIsLoading(false);

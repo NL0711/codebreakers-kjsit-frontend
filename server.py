@@ -376,7 +376,7 @@ def record_login_attempt():
         "ip_address": request.remote_addr,
         "user_agent": request.headers.get("User-Agent")
     }
-    
+
 @app.route('/api/generate-fraud', methods=['POST'])
 def generate_fraud():
     """Endpoint to generate fraudulent activities for testing"""

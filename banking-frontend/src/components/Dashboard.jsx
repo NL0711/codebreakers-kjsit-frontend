@@ -3,9 +3,10 @@
 import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
-import { Shield, AlertTriangle, ArrowUpRight, ArrowDownLeft, CreditCard, Send, History } from "lucide-react"
+import { Shield, ArrowUpRight, ArrowDownLeft } from "lucide-react"
 import DashboardSidebar from "../components/DashboardSidebar"
 import QuickActions from "../components/QuickActions"
+import SecurityAlerts from "../components/SecurityAlerts"
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth()
@@ -47,7 +48,7 @@ export default function Dashboard() {
           </div>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-[#0D191E] bg-opacity-40 10 hover:bg-[#0D191E] bg-opacity-40 20 rounded-lg transition-colors"
+            className="px-4 py-2 bg-[#0D191E] bg-opacity-40 hover:bg-opacity-60 rounded-lg transition-colors"
           >
             Logout
           </button>
@@ -55,7 +56,7 @@ export default function Dashboard() {
 
         {/* Account Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-[#0D191E] bg-opacity-40 5 p-6 rounded-xl">
+          <div className="bg-[#0D191E] bg-opacity-40 p-6 rounded-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Checking Account</h3>
               <span className="text-yellow-500">Active</span>
@@ -73,7 +74,7 @@ export default function Dashboard() {
             <p className="text-gray-400">Account ending in 7890</p>
           </div>
 
-          <div className="bg-[#0D191E] bg-opacity-40 5 p-6 rounded-xl">
+          <div className="bg-[#0D191E] bg-opacity-40 p-6 rounded-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Credit Card</h3>
               <span className="text-yellow-500">Active</span>
@@ -92,7 +93,7 @@ export default function Dashboard() {
         {/* Recent Transactions */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
-          <div className="bg-[#0D191E] bg-opacity-40 5 rounded-xl overflow-hidden">
+          <div className="bg-[#0D191E] bg-opacity-40 rounded-xl overflow-hidden">
             <div className="p-4 border-b border-white/10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -130,29 +131,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Fraud Detection */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Security Alerts</h2>
-          <div className="bg-[#0D191E] bg-opacity-40 5 p-6 rounded-xl">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                <Shield className="w-6 h-6 text-yellow-500" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Suspicious Activity Detected</h3>
-                <p className="text-gray-400">Unusual login attempt from New York</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-red-500" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Potential Fraud Alert</h3>
-                <p className="text-gray-400">Large transaction in different timezone</p>
-              </div>
-            </div>
-          </div>
+          <h2 className="text-xl font-semibold mb-4">Security Actions</h2>
+          <SecurityAlerts />
         </div>
       </main>
     </div>
