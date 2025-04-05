@@ -11,7 +11,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http:///127.0.0.1:5000/login', {
+      const response = await axios.post('http://localhost:5000/login', {
         username,
         password,
       });
@@ -22,7 +22,7 @@ function Login() {
         setError('Invalid credentials');
       }
     } catch (err) {
-      setError(`Error connecting to server: ${err}`);
+      setError('Error connecting to server');
     }
   };
 
