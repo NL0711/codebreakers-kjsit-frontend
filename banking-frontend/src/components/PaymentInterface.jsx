@@ -30,7 +30,7 @@ const PaymentInterface = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0D191E] relative overflow-hidden">
+    <div className="min-h-screen bg-hero-bg relative overflow-hidden">
       {/* Background gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-transparent"></div>
 

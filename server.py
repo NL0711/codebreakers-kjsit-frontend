@@ -7,16 +7,28 @@ import uuid
 from datetime import datetime, timedelta
 import numpy as np
 from flask_cors import CORS
+import pandas as pd
 
 app = Flask(__name__)
+
+# Configure CORS
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:5173"],
+        "origins": ["http://localhost:5174"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
     }
 })
+
+# Add CORS headers to all responses
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5174')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 # In-memory database for demonstration
 database = {
@@ -204,6 +216,32 @@ def create_transaction():
     
     account = database["accounts"][account_id]
     
+    # Get transaction analysis data
+    transaction_analysis = txn_data.get('transaction_analysis', {})
+    
+    # Calculate user's average transaction amount
+    user_transactions = [t for t in database["transactions"] if t["account_id"] == account_id]
+    user_average_transaction = sum(t["amount"] for t in user_transactions) / len(user_transactions) if user_transactions else 0
+    
+    # Calculate transactions in last hour
+    one_hour_ago = datetime.now() - timedelta(hours=1)
+    transactions_last_hour = len([t for t in user_transactions 
+                                if datetime.fromisoformat(t["timestamp"]) > one_hour_ago])
+    
+    # Calculate time since last login
+    last_login = max([datetime.fromisoformat(attempt["timestamp"]) 
+                     for attempt in database["login_attempts"] 
+                     if attempt["username"] == account["user_id"]], 
+                    default=datetime.now())
+    time_since_last_login = (datetime.now() - last_login).total_seconds() / 3600  # in hours
+    
+    # Update transaction analysis with calculated values
+    transaction_analysis.update({
+        "user_average_transaction": user_average_transaction,
+        "transactions_last_hour": transactions_last_hour,
+        "time_since_last_login": time_since_last_login
+    })
+    
     # Generate a new transaction
     txn_id = str(uuid.uuid4())
     timestamp = datetime.now().isoformat()
@@ -227,7 +265,7 @@ def create_transaction():
         location = random.choice(user["usual_locations"])
         device_info = user["usual_device"]
     
-    # Create transaction object
+    # Create transaction object with analysis data
     transaction = {
         "transaction_id": txn_id,
         "account_id": account_id,
@@ -241,7 +279,8 @@ def create_transaction():
         "ip_address": ip_address,
         "device_info": device_info,
         "location": location,
-        "status": "pending"
+        "status": "pending",
+        "transaction_analysis": transaction_analysis
     }
     
     # Update account balance
@@ -263,14 +302,8 @@ def create_transaction():
 @app.route('/login', methods=['POST', 'OPTIONS'])
 def login():
     if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        return response, 200
+        return jsonify({'status': 'ok'}), 200
 
-    # Handle actual login request
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
@@ -292,6 +325,25 @@ def login():
         "ip_address": request.remote_addr,
         "user_agent": request.headers.get("User-Agent")
     }
+    
+    database["login_attempts"].append(login_attempt)
+    
+    if user:
+        response = jsonify({
+            "success": True,
+            "user": {
+                "id": user["user_id"],
+                "name": user["name"],
+                "email": user["email"]
+            }
+        })
+    else:
+        response = jsonify({
+            "success": False,
+            "error": "Invalid credentials"
+        }), 401
+    
+    return response
 
 @app.route('/login-attempt', methods=['POST'])
 def record_login_attempt():

@@ -68,7 +68,7 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[#0D191E]">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-hero-bg">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="text-white text-3xl font-semibold flex items-center justify-center gap-2">
@@ -121,18 +121,7 @@ const Login = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-600 bg-white/10 text-yellow-500 focus:ring-yellow-500"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
-                  Remember me
-                </label>
-              </div>
+            <div className="flex justify-center">
               <a href="#" className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors">
                 Forgot password?
               </a>
@@ -146,15 +135,6 @@ const Login = () => {
               {isLoading ? "Logging in..." : "Log In"}
             </button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-gray-400">
-              Don't have an account?{" "}
-              <a href="#" className="text-yellow-400 hover:text-yellow-300 transition-colors font-medium">
-                Register
-              </a>
-            </p>
-          </div>
         </div>
 
         <div className="mt-8 text-center text-sm text-gray-400">

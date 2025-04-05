@@ -19,7 +19,7 @@ export default function DashboardSidebar() {
   ]
 
   return (
-    <div className="w-64 bg-[#0D191E] h-screen fixed left-0 top-0 p-6">
+    <div className="w-64 bg-[#0D191E] bg-opacity-50 h-screen fixed left-0 top-0 p-6">
       <div className="flex items-center gap-2 mb-8">
         <div className="w-8 h-8 bg-yellow-500 rounded-full"></div>
         <span className="text-white font-semibold text-lg">SecureBank</span>
