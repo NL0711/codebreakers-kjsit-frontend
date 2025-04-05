@@ -5,8 +5,6 @@ import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { Shield, AlertTriangle, ArrowUpRight, ArrowDownLeft, CreditCard } from "lucide-react"
 import DashboardSidebar from "../components/DashboardSidebar"
-import AccountSummary from "../components/AccountSummary"
-import RecentTransactions from "../components/RecentTransactions"
 import QuickActions from "../components/QuickActions"
 
 export default function Dashboard() {
