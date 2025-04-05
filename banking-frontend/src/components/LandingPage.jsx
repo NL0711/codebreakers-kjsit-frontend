@@ -2,22 +2,17 @@ import { Link } from 'react-router-dom';
 
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-primary">
+    <div className="min-h-screen bg-hero-bg">
       {/* Navigation */}
       <nav className="px-8 py-4 flex justify-between items-center">
         <div className="flex items-center">
           <Link to="/" className="text-white text-xl font-semibold">SecureBank</Link>
         </div>
-        <div className="flex items-center space-x-8">
-          <Link to="/product" className="text-gray-300 hover:text-white text-sm transition-colors">Product</Link>
-          <Link to="/solutions" className="text-gray-300 hover:text-white text-sm transition-colors">Solutions</Link>
-          <Link to="/developers" className="text-gray-300 hover:text-white text-sm transition-colors">Developers</Link>
+        <div className="flex items-center space-x-8 p-12">
           <Link to="/customers" className="text-gray-300 hover:text-white text-sm transition-colors">Customers</Link>
           <Link to="/resources" className="text-gray-300 hover:text-white text-sm transition-colors">Resources</Link>
-          <Link to="/pricing" className="text-gray-300 hover:text-white text-sm transition-colors">Pricing</Link>
-          <Link to="/login" className="text-gray-300 hover:text-white text-sm transition-colors">Log in</Link>
-          <Link to="/demo" className="bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-md text-sm transition-colors">
-            Request a demo
+          <Link to="/dashboard" className="bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-md text-sm transition-colors">
+            Dashboard
           </Link>
         </div>
       </nav>
@@ -34,9 +29,12 @@ function LandingPage() {
             onboard vendors seamlessly, customize
             approval flows, and more — for 30% less.
           </p>
-          <button className="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-md transition-colors">
-            Request a demo
-          </button>
+          <Link 
+            to="/login" 
+            className="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-md transition-colors"
+          >
+            Login
+          </Link>
         </div>
       </div>
     </div>

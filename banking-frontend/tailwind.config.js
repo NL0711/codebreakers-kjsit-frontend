@@ -15,6 +15,7 @@ export default {
       },
       backgroundImage: {
         'header-gradient': 'linear-gradient(to right, #0D191E, #1A2B35)',
+        'hero-bg': "url('/src/assets/header-bg.svg')"
       },
     },
   },
