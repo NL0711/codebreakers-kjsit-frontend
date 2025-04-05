@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import { AuthProvider } from './context/AuthContext';
 import Payment from './components/Payment';
+import OTPVerification from './components/OTPVerification';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/payment" element={<Payment />} />
+            <Route path="/verify-transaction" element={<OTPVerification />} />
           </Routes>
         </div>
       </Router>

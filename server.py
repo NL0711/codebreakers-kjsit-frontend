@@ -439,44 +439,173 @@ def generate_fraud():
     else:
         return jsonify({"error": "Invalid fraud type specified"}), 400
 
-@app.route('/api/export-data', methods=['GET'])
-def export_data():
-    """Export data for ML training"""
-    data_type = request.args.get('type', 'transactions')
+@app.route('/api/fraudulent-transactions', methods=['GET'])
+def get_fraudulent_transactions():
+    # Get all transactions and check for fraud indicators
+    fraudulent_txns = []
+    for txn in database["transactions"]:
+        # Get user's info
+        user = database["users"].get(txn["user_id"])
+        if not user:
+            continue
+            
+        # Check for fraud indicators based on specific parameters
+        is_fraudulent = False
+        fraud_reason = None
+        
+        # 1. High Transaction Amount (over $1000)
+        if txn.get("amount", 0) > 1000:
+            # 4. Compare with User's Average Transaction Amount
+            user_transactions = [t for t in database["transactions"] if t["user_id"] == txn["user_id"]]
+            avg_amount = sum(t["amount"] for t in user_transactions) / len(user_transactions) if user_transactions else 0
+            if txn["amount"] > (avg_amount * 3):  # 3x higher than average
+                is_fraudulent = True
+                fraud_reason = f"Unusually high amount: ${txn['amount']} (Average: ${avg_amount:.2f})"
+        
+        # 5 & 6. Unusual Location/Device
+        if not is_fraudulent and txn.get("ip_address") and txn.get("device_info"):
+            recent_txns = [t for t in database["transactions"] 
+                          if t["user_id"] == txn["user_id"] and 
+                          t["ip_address"] == txn["ip_address"] and
+                          t["device_info"] == txn["device_info"]]
+            if not recent_txns:
+                is_fraudulent = True
+                fraud_reason = "New device and location detected"
+        
+        # 7. Rapid Transactions
+        if not is_fraudulent and txn.get("transactions_last_hour", 0) > 5:
+            is_fraudulent = True
+            fraud_reason = f"High frequency: {txn['transactions_last_hour']} transactions in last hour"
+        
+        # 8. Suspicious Login Time
+        if not is_fraudulent and txn.get("time_since_last_login", 0) < 0.1:  # Less than 6 minutes
+            is_fraudulent = True
+            fraud_reason = "Transaction too soon after login"
+        
+        # 9 & 10. New Payment Method with Shipping
+        if not is_fraudulent and txn.get("shipping_address"):
+            payment_age = txn.get("transaction_analysis", {}).get("payment_method_age", 0)
+            if payment_age < 1:  # Less than 1 year old
+                is_fraudulent = True
+                fraud_reason = "New payment method with shipping address"
+        
+        if is_fraudulent:
+            # Add fraud reason and user info to transaction data
+            txn_with_reason = txn.copy()
+            txn_with_reason["fraud_reason"] = fraud_reason
+            txn_with_reason["user_name"] = user.get("name", "Unknown User")
+            txn_with_reason["user_email"] = user.get("email", "Unknown Email")
+            fraudulent_txns.append(txn_with_reason)
     
-    if data_type == 'transactions':
-        df = pd.DataFrame(database["transactions"])
-        
-        # Add fraud labels (for demonstration)
-        df['is_fraud'] = df.apply(
-            lambda x: 1 if ('flag' in x and x['flag'] == 'POTENTIAL_FRAUD') or 
-                          (x['location'] not in database["users"].get(x['user_id'], {}).get('usual_locations', []) and 
-                           x['amount'] > 500 and x['type'] == 'debit') 
-                      else 0, 
-            axis=1
-        )
-        
-        # Convert to JSON
-        result = df.to_dict('records')
-        return jsonify(result)
+    # Sort by timestamp (newest first)
+    fraudulent_txns = sorted(fraudulent_txns, key=lambda x: x["timestamp"], reverse=True)
     
-    elif data_type == 'sessions':
-        df = pd.DataFrame(list(database["sessions"].values()))
-        
-        # Add fraud labels (for demonstration)
-        df['is_suspicious'] = df.apply(
-            lambda x: 1 if ('flag' in x and x['flag'] == 'SUSPICIOUS_LOGIN') or 
-                          (x['location'] not in database["users"].get(x['user_id'], {}).get('usual_locations', [])) 
-                      else 0, 
-            axis=1
-        )
-        
-        # Convert to JSON
-        result = df.to_dict('records')
-        return jsonify(result)
+    return jsonify(fraudulent_txns)
+
+@app.route('/api/analyze-transaction', methods=['POST'])
+def analyze_transaction():
+    """Endpoint to analyze transaction using ML parameters"""
+    data = request.json
     
-    else:
-        return jsonify({"error": "Invalid data type specified"}), 400
+    # Required ML parameters
+    required_params = [
+        "transaction_amount",
+        "merchant_category_code",
+        "transaction_time",
+        "user_average_transaction",
+        "ip_address",
+        "device_id",
+        "transactions_last_hour",
+        "time_since_last_login",
+        "shipping_address",
+        "payment_method_age"
+    ]
+    
+    # Validate all required parameters are present
+    missing_params = [param for param in required_params if param not in data]
+    if missing_params:
+        return jsonify({
+            "error": "Missing required parameters",
+            "missing_params": missing_params
+        }), 400
+    
+    # Prepare features for ML model
+    features = {
+        "amount": float(data["transaction_amount"]),
+        "merchant_code": data["merchant_category_code"],
+        "hour_of_day": datetime.fromisoformat(data["transaction_time"]).hour,
+        "amount_vs_average": float(data["transaction_amount"]) / float(data["user_average_transaction"]) if float(data["user_average_transaction"]) > 0 else float("inf"),
+        "ip_address": data["ip_address"],
+        "device_id": data["device_id"],
+        "recent_transactions": int(data["transactions_last_hour"]),
+        "login_time_diff": float(data["time_since_last_login"]),
+        "has_shipping": bool(data["shipping_address"]),
+        "payment_age": float(data["payment_method_age"])
+    }
+    
+    # Here you would pass these features to your ML model
+    # For example:
+    # prediction = ml_model.predict(features)
+    # fraud_probability = ml_model.predict_proba(features)
+    
+    # For demonstration, using a simplified scoring system
+    # In production, replace this with actual ML model prediction
+    risk_factors = []
+    risk_score = 0
+    
+    if features["amount_vs_average"] > 3:
+        risk_factors.append({
+            "factor": "Amount significantly higher than user average",
+            "severity": "high",
+            "weight": 0.3
+        })
+        risk_score += 30
+    
+    if features["recent_transactions"] > 5:
+        risk_factors.append({
+            "factor": "High number of recent transactions",
+            "severity": "medium",
+            "weight": 0.2
+        })
+        risk_score += 20
+    
+    if features["login_time_diff"] < 0.1:  # Less than 6 minutes
+        risk_factors.append({
+            "factor": "Transaction too soon after login",
+            "severity": "medium",
+            "weight": 0.15
+        })
+        risk_score += 15
+    
+    if features["has_shipping"] and features["payment_age"] < 1:
+        risk_factors.append({
+            "factor": "New payment method with shipping",
+            "severity": "high",
+            "weight": 0.25
+        })
+        risk_score += 25
+    
+    if features["hour_of_day"] < 6 or features["hour_of_day"] > 23:
+        risk_factors.append({
+            "factor": "Unusual transaction hour",
+            "severity": "low",
+            "weight": 0.1
+        })
+        risk_score += 10
+    
+    # ML model analysis response
+    response = {
+        "transaction_id": str(uuid.uuid4()),
+        "timestamp": datetime.now().isoformat(),
+        "risk_score": risk_score,
+        "is_fraudulent": risk_score >= 50,
+        "confidence": min(risk_score / 100, 0.99),  # Convert score to probability
+        "risk_factors": risk_factors,
+        "features_analyzed": list(features.keys()),
+        "model_version": "1.0.0"  # For tracking which version of the model made the prediction
+    }
+    
+    return jsonify(response)
 
 # Initialize database
 initialize_dummy_data()
