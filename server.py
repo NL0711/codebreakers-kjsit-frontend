@@ -24,7 +24,8 @@ database = {
     "accounts": {},
     "transactions": [],
     "sessions": {},
-    "users": {}
+    "users": {},
+    "login_attempts": []
 }
 
 # Load initial dummy data
@@ -272,8 +273,9 @@ def login():
 
     # Handle actual login request
     data = request.get_json()
-    username = data.get('username')  # We'll use email as username
+    username = data.get('username')
     password = data.get('password')
+    behavioral_data = data.get('behavioralData', {})
     
     # Find user by email
     user = None
@@ -281,6 +283,21 @@ def login():
         if u["email"] == username and u["password"] == password:
             user = u
             break
+    
+    # Store the login attempt with behavioral data
+    login_attempt = {
+        "timestamp": behavioral_data.get('timestamp', datetime.now().isoformat()),
+        "username": username,
+        "success": user is not None,
+        "behavioral_data": behavioral_data,
+        "ip_address": request.remote_addr,
+        "user_agent": request.headers.get("User-Agent")
+    }
+    
+    # Store login attempt in database (you might want to create a new collection for this)
+    if "login_attempts" not in database:
+        database["login_attempts"] = []
+    database["login_attempts"].append(login_attempt)
     
     if user:
         return jsonify({
@@ -297,6 +314,35 @@ def login():
             'success': False,
             'message': 'Invalid email or password'
         }), 401
+
+@app.route('/login-attempt', methods=['POST'])
+def record_login_attempt():
+    data = request.get_json()
+    
+    # Store the failed login attempt
+    login_attempt = {
+        "timestamp": data.get('timestamp', datetime.now().isoformat()),
+        "username": data.get('username'),
+        "success": False,
+        "error": data.get('error'),
+        "behavioral_data": {
+            "sessionData": data.get('sessionData', {}),
+            "typingAnalysis": data.get('typingAnalysis', {}),
+            "securityMetrics": data.get('securityMetrics', {})
+        },
+        "ip_address": request.remote_addr,
+        "user_agent": request.headers.get("User-Agent")
+    }
+    
+    # Store login attempt in database
+    if "login_attempts" not in database:
+        database["login_attempts"] = []
+    database["login_attempts"].append(login_attempt)
+    
+    return jsonify({
+        'success': True,
+        'message': 'Login attempt recorded'
+    }), 200
 
 @app.route('/api/generate-fraud', methods=['POST'])
 def generate_fraud():
