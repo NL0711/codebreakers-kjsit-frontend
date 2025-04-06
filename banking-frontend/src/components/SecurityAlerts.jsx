@@ -113,7 +113,7 @@ export default function SecurityAlerts() {
                 <>
                   <h3 className="font-semibold">Admin Action Taken</h3>
                   <p className="text-gray-400">
-                    Action: {item.action} by {item.adminId}
+                    Action: {item.action}  
                   </p>
                   {item.notes && (
                     <p className="text-gray-400 text-sm">

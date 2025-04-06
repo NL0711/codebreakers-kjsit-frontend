@@ -5,7 +5,8 @@ import { useNavigate } from "react-router-dom"
 import { Shield, AlertTriangle } from "lucide-react"
 import { behavioralAnalyzer } from "../utils/behaviouralAnalysis"
 import { useAuth } from "../context/AuthContext"
-
+import logo from "../assets/logo.svg"
+  
 const Login = () => {
   const navigate = useNavigate()
   const { login } = useAuth()
@@ -69,13 +70,13 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-hero-bg">
-      <div className="w-full max-w-md">
+      {/* <img src={linesBg} alt="Decorateive 3D lines" className="w-full w-auto" /> */}
+      <div className="w-full max-w-md <div bg-black/40 rounded-2xl p-12 shadow-xl">
+
         <div className="text-center mb-8">
-          <div className="text-white text-3xl font-semibold flex items-center justify-center gap-2">
-            <Shield className="w-8 h-8" />
-            SecureBank
+          <div className="flex items-center justify-center gap-2">
+            <img src={logo} alt="SecureBank Logo" className="w-full w-auto" />
           </div>
-          <p className="text-gray-300 mt-2">Welcome back! Please login to your account.</p>
         </div>
 
         <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-2xl">

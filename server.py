@@ -641,6 +641,28 @@ def analyze_transaction():
     
     return jsonify(response)
 
+@app.route('/api/recent-transactions/<user_id>', methods=['GET'])
+def get_user_recent_transactions(user_id):
+    """Get the 5 most recent transactions for a specific user"""
+    try:
+        # Filter transactions for the specific user and sort by timestamp
+        user_transactions = [
+            txn for txn in database["transactions"]
+            if txn["user_id"] == user_id
+        ]
+        
+        # Sort by timestamp (newest first) and get top 5
+        recent_transactions = sorted(
+            user_transactions,
+            key=lambda x: x["timestamp"],
+            reverse=True
+        )[:5]
+        
+        return jsonify(recent_transactions)
+    except Exception as e:
+        print(f"Error in get_user_recent_transactions: {str(e)}")
+        return jsonify({"error": "Failed to fetch transactions"}), 500
+
 # Initialize database
 initialize_dummy_data()
 

@@ -3,10 +3,10 @@
 import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
-import { Shield, ArrowUpRight, ArrowDownLeft } from "lucide-react"
 import DashboardSidebar from "../components/DashboardSidebar"
 import QuickActions from "../components/QuickActions"
 import SecurityAlerts from "../components/SecurityAlerts"
+import RecentTransactions from "../components/RecentTransactions"
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth()
@@ -91,45 +91,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Transactions */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
-          <div className="bg-[#0D191E] bg-opacity-40 rounded-xl overflow-hidden">
-            <div className="p-4 border-b border-white/10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                    <ArrowUpRight className="w-5 h-5 text-yellow-500" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Salary Deposit</p>
-                    <p className="text-sm text-gray-400">From: Company Inc.</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-green-500">+$5,000.00</p>
-                  <p className="text-sm text-gray-400">Today, 9:30 AM</p>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 border-b border-white/10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
-                    <ArrowDownLeft className="w-5 h-5 text-red-500" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Grocery Shopping</p>
-                    <p className="text-sm text-gray-400">To: Supermarket</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-red-500">-$150.75</p>
-                  <p className="text-sm text-gray-400">Yesterday, 2:15 PM</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <RecentTransactions user={user} />
 
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Security Actions</h2>
@@ -139,14 +101,3 @@ export default function Dashboard() {
     </div>
   )
 }
-// function Dashboard() {
-//   return (
-//     <div className="dashboard">
-//       <h2>Welcome to Your Dashboard</h2>
-//       <p>You are now logged in!</p>
-      
-//     </div>
-//   );
-// }
-
-// export default Dashboard; 
