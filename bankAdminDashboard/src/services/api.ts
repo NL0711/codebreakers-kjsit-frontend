@@ -61,4 +61,22 @@ export const updateTransactionStatus = async (
   }
 
   return { success: true };
-}; 
+};
+
+export async function analyzeBankStatement(formData: FormData) {
+  try {
+    const response = await fetch('YOUR_BACKEND_API_URL/analyze-statement', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to analyze bank statement');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error analyzing bank statement:', error);
+    throw error;
+  }
+} 
