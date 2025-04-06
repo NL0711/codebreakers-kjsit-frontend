@@ -55,12 +55,6 @@ export default function RecentTransactions({ user }) {
     }
 
     fetchTransactions()
-    
-    // Set up periodic refresh every 30 seconds
-    const interval = setInterval(fetchTransactions, 30000)
-    
-    // Cleanup interval on component unmount
-    return () => clearInterval(interval)
   }, [user?.id, retryCount])
 
   const formatAmount = (amount, type) => {
@@ -145,7 +139,7 @@ export default function RecentTransactions({ user }) {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className={`font-medium ${transaction.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
+                  <p className = "font-name" >
                     {formatAmount(transaction.amount, transaction.type)}
                   </p>
                   <p className="text-sm text-gray-400">{formatDate(transaction.timestamp)}</p>
